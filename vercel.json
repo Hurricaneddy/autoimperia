@@ -60,6 +60,14 @@
     {
       "source": "/api/admin/update_status.php",
       "destination": "/api/router.php?__demo_route=/api/admin/update_status.php"
+    },
+    {
+      "source": "/client/login.php",
+      "destination": "/api/router.php?__demo_route=/client/login.php"
+    },
+    {
+      "source": "/client/index.php",
+      "destination": "/api/router.php?__demo_route=/client/index.php"
     }
   ]
 }

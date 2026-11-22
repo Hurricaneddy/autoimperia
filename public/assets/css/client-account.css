@@ -1,0 +1,43 @@
+.account-wrap { width: min(1180px, calc(100% - 32px)); margin-inline: auto; }
+.account-header { background: #0f172a; color: #fff; }
+.account-header-inner, .account-vehicle, .account-order-head, .account-pagination {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.account-header-inner { padding-block: 14px; }
+.account-brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.2rem; color: inherit; text-decoration: none; }
+.account-brand .ui-icon { color: #dc2626; }
+.account-main { padding-block: 28px 48px; }
+.account-intro { margin-bottom: 20px; }
+.account-muted { color: #475569; margin-top: 4px; }
+.account-notice, .account-error { margin: 12px 0; padding: 10px 12px; border-radius: 8px; background: #eff6ff; color: #1e3a8a; }
+.account-error { background: #fef2f2; color: #991b1b; }
+.account-login { width: min(440px, calc(100% - 32px)); margin: clamp(20px, 8vh, 72px) auto; background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: clamp(16px, 4vw, 30px); }
+.account-login h1 { margin: 14px 0 6px; font-size: 1.65rem; }
+.account-form { display: grid; gap: 12px; margin-top: 12px; }
+.account-form label, .account-mileage label { display: grid; gap: 4px; font-weight: 600; font-size: .9rem; }
+.account-alt { margin-top: 16px; }
+.account-alt a, .account-pagination a { color: #9f1d20; font-weight: 700; }
+.account-layout { display: grid; grid-template-columns: minmax(230px, 285px) minmax(0, 1fr); align-items: start; gap: 18px; }
+.account-content { display: grid; gap: 16px; min-width: 0; }
+.account-panel { padding: clamp(14px, 3vw, 22px); min-width: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; }
+.account-panel h2 { font-size: 1.15rem; margin-bottom: 8px; }
+.account-panel details { margin-top: 12px; }
+.account-panel summary { cursor: pointer; font-weight: 700; color: #1e293b; }
+.account-garage { display: grid; gap: 8px; margin-block: 10px; }
+.account-garage a { display: grid; gap: 3px; padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px; color: #1e293b; text-decoration: none; overflow-wrap: anywhere; }
+.account-garage span { color: #475569; font-size: .86rem; }
+.account-garage a[aria-current], .account-tabs a[aria-current] { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.account-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-block: 12px; }
+.account-tabs a { padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; text-decoration: none; font-weight: 700; }
+.account-order { border-top: 1px solid #e2e8f0; padding: 12px 0; overflow-wrap: anywhere; }
+.account-order ul, .account-recent ul { padding-left: 19px; margin-block: 8px; }
+.account-comment { white-space: pre-wrap; color: #334155; }
+.account-badge { background: #eef2ff; color: #3730a3; border-radius: 20px; padding: 4px 9px; font-size: .8rem; font-weight: 700; }
+.account-badge-done { background: #dcfce7; color: #166534; }
+.account-mileage { display: flex; align-items: end; gap: 8px; flex-wrap: wrap; margin-block: 14px; }
+.account-recommendations { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 10px; }
+.account-rule { background: #f8fafc; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; }
+.account-rule-due { background: #fffbeb; border-color: #fcd34d; }
+.account-rule h3 { font-size: .97rem; padding-bottom: 4px; }
+.account-rule p { margin-top: 5px; font-size: .86rem; }
+@media (max-width: 760px) { .account-layout { grid-template-columns: minmax(0, 1fr); } }

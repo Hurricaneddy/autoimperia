@@ -1,0 +1,12 @@
+.ui-icon {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.18em;
+  flex: none;
+}
+.logo-crown .ui-icon,
+.brand-crown .ui-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+}
