@@ -1,6 +1,37 @@
 <?php
 declare(strict_types=1);
 
+function insertReturningId(PDO $connection, string $sql, array $parameters, string $column): int
+{
+    $postgres = $connection->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql';
+    $statement = $connection->prepare($postgres ? $sql . ' RETURNING ' . $column : $sql);
+    $statement->execute($parameters);
+    if (!$postgres) {
+        return (int)$connection->lastInsertId();
+    }
+    return (int)$statement->fetchColumn();
+}
+
+$databaseUrl = getenv('AUTOIMPERIA_DATABASE_URL');
+if ($databaseUrl !== false && $databaseUrl !== '') {
+    $connection = parse_url($databaseUrl);
+    if (!$connection || !in_array($connection['scheme'] ?? '', ['postgres', 'postgresql'], true)
+        || !preg_match('/^[a-z0-9.-]+$/iD', $connection['host'] ?? '')
+        || !preg_match('~^/[a-z0-9_]+$~iD', $connection['path'] ?? '')
+        || !isset($connection['user'], $connection['pass'])) {
+        throw new RuntimeException('Неверный адрес AUTOIMPERIA_DATABASE_URL');
+    }
+
+    $dsn = sprintf('pgsql:host=%s;port=%d;dbname=%s;sslmode=require',
+        $connection['host'], $connection['port'] ?? 5432, substr($connection['path'], 1));
+    $pdo = new PDO($dsn, rawurldecode($connection['user']), rawurldecode($connection['pass']), [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+    $pdo->exec('SET search_path TO autoimperia, pg_catalog');
+    return;
+}
+
 if (!is_file(DEMO_DB_FILE)) {
     $directory = dirname(DEMO_DB_FILE);
     if (!is_dir($directory) && !@mkdir($directory, 0700, true) && !is_dir($directory)) {

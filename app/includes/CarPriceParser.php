@@ -22,7 +22,7 @@ class CarPriceParser {
         $stmt = $this->pdo->prepare("
             SELECT * FROM vehicle_market_data
             WHERE LOWER(brand) = LOWER(:brand) AND LOWER(model) = LOWER(:model)
-              AND (:year IS NULL OR :year BETWEEN year_from AND year_to)
+              AND (CAST(:year AS INTEGER) IS NULL OR :year BETWEEN year_from AND year_to)
             ORDER BY spec_id ASC
             LIMIT 1
         ");

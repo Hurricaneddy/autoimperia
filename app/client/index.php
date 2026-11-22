@@ -49,10 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (($yearInput !== '' && !$year) || ($kmInput !== '' && !$km)) {
             $error = 'Проверьте год выпуска и пробег автомобиля.';
         } else {
-            $pdo->prepare('INSERT INTO vehicles (client_id, brand, model, plate_number, prod_year, mileage) VALUES (?, ?, ?, ?, ?, ?)')
-                ->execute([$clientId, $brand, $model, $plate ?: null, $year, $km ?? 0]);
+            $vehicleId = insertReturningId($pdo,
+                'INSERT INTO vehicles (client_id, brand, model, plate_number, prod_year, mileage) VALUES (?, ?, ?, ?, ?, ?)',
+                [$clientId, $brand, $model, $plate ?: null, $year, $km ?? 0], 'vehicle_id');
             $_SESSION['client_message'] = 'Автомобиль добавлен.';
-            clientRedirect('/client/index.php?vehicle=' . (int)$pdo->lastInsertId());
+            clientRedirect('/client/index.php?vehicle=' . $vehicleId);
         }
     }
 }
@@ -85,8 +86,11 @@ if ($vehicle) {
     $page = min($page, $pages);
     $offset = ($page - 1) * 10;
     $direction = $history ? 'DESC' : 'ASC';
+    $workList = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql'
+        ? 'STRING_AGG(s.title, chr(10) ORDER BY i.item_id)'
+        : 'GROUP_CONCAT(s.title, char(10))';
     $list = $pdo->prepare("SELECT a.booking_code, a.visit_date, a.start_time, a.status, a.client_comment,
-        a.total_price, ao.kilometers, (SELECT GROUP_CONCAT(s.title, char(10)) FROM appointment_services i
+        a.total_price, ao.kilometers, (SELECT $workList FROM appointment_services i
             JOIN services s ON s.service_id = i.service_id WHERE i.appointment_id = a.appointment_id) AS work
         FROM appointments a LEFT JOIN appointment_odometer ao ON ao.appointment_id = a.appointment_id
         $condition ORDER BY a.visit_date $direction, a.start_time $direction, a.appointment_id $direction

@@ -162,8 +162,10 @@ try {
 
     $forUpdate = ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') ? '' : 'FOR UPDATE';
 
-    // Проверяем посты с блокировкой FOR UPDATE
+    $bayLock = $forUpdate ? $pdo->prepare('SELECT bay_id FROM work_bays WHERE bay_id = ? FOR UPDATE') : null;
     foreach ($compatibleBays as $bay) {
+        // Блокируем сам пост, даже если на него ещё нет записей.
+        $bayLock?->execute([$bay['bay_id']]);
         $checkSql = "
             SELECT appointment_id 
             FROM appointments 
@@ -201,9 +203,8 @@ try {
 
     $clientId = (int)($account['client_id'] ?? $_SESSION['guest_clients'][clientPhoneKey($clientPhone)] ?? 0);
     if (!$clientId) {
-        $pdo->prepare('INSERT INTO clients (full_name, phone, email) VALUES (?, ?, ?)')
-            ->execute([$clientName, $clientPhone, $clientEmail ?: null]);
-        $clientId = (int)$pdo->lastInsertId();
+        $clientId = insertReturningId($pdo, 'INSERT INTO clients (full_name, phone, email) VALUES (?, ?, ?)',
+            [$clientName, $clientPhone, $clientEmail ?: null], 'client_id');
     }
 
     if (!$vehicleId) {
@@ -218,9 +219,8 @@ try {
         $vehicleId = (int)$vehicleStmt->fetchColumn();
     }
     if (!$vehicleId) {
-        $pdo->prepare('INSERT INTO vehicles (client_id, brand, model, prod_year, plate_number) VALUES (?, ?, ?, ?, ?)')
-            ->execute([$clientId, $brand, $model, $prodYear, $plateNumber ?: null]);
-        $vehicleId = (int)$pdo->lastInsertId();
+        $vehicleId = insertReturningId($pdo, 'INSERT INTO vehicles (client_id, brand, model, prod_year, plate_number) VALUES (?, ?, ?, ?, ?)',
+            [$clientId, $brand, $model, $prodYear, $plateNumber ?: null], 'vehicle_id');
     }
 
     // 6. Создание записи в таблице appointments
@@ -246,8 +246,7 @@ try {
          :total_price, :parts_price, :discount, :pay_status, :paid_amount, 'new', 
          :comment, :parts_inc, :parts_grade)
     ";
-    $appStmt = $pdo->prepare($appInsertSql);
-    $appStmt->execute([
+    $appointmentId = insertReturningId($pdo, $appInsertSql, [
         ':code'         => $bookingCode,
         ':client_id'    => $clientId,
         ':vehicle_id'   => $vehicleId,
@@ -263,12 +262,12 @@ try {
         ':comment'      => $clientComment ?: null,
         ':parts_inc'    => ($partsGrade !== 'none' ? 1 : 0),
         ':parts_grade'  => $partsGrade
-    ]);
-    $appointmentId = (int)$pdo->lastInsertId();
+    ], 'appointment_id');
     if ($odometer !== null) {
         $pdo->prepare('INSERT INTO appointment_odometer (appointment_id, kilometers) VALUES (?, ?)')
             ->execute([$appointmentId, $odometer]);
-        $pdo->prepare('UPDATE vehicles SET mileage = MAX(COALESCE(mileage, 0), CAST(? AS INTEGER)) WHERE vehicle_id = ?')
+        $greatest = $forUpdate ? 'GREATEST' : 'MAX';
+        $pdo->prepare("UPDATE vehicles SET mileage = $greatest(COALESCE(mileage, 0), CAST(? AS INTEGER)) WHERE vehicle_id = ?")
             ->execute([$odometer, $vehicleId]);
     }
 

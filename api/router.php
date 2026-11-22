@@ -56,11 +56,12 @@ if (!is_dir($workspace) && !@mkdir($workspace, 0700) && !is_dir($workspace)) {
     exit('Временное хранилище недоступно');
 }
 session_save_path($workspace);
-session_name('autoimperia_demo');
+$postgresConfigured = getenv('AUTOIMPERIA_DATABASE_URL') ?: '';
+session_name($postgresConfigured !== '' ? 'autoimperia_postgres' : 'autoimperia_demo');
 ini_set('session.use_strict_mode', '1');
 session_set_cookie_params([
     'path' => '/',
-    'secure' => isset($_SERVER['VERCEL']) || strtolower($_SERVER['HTTPS'] ?? '') === 'on',
+    'secure' => isset($_SERVER['VERCEL']) || getenv('CODESPACES') === 'true' || strtolower($_SERVER['HTTPS'] ?? '') === 'on',
     'httponly' => true,
     'samesite' => 'Lax',
 ]);
@@ -71,7 +72,7 @@ if (!isset($_SESSION['demo_workspace'])) {
 }
 $configuredDb = getenv('AUTOIMPERIA_DB_PATH');
 $localDb = PHP_SAPI === 'cli-server' ? __DIR__ . '/../var/autoimperia.sqlite' : '';
-define('PERSISTENT_DB', !isset($_SERVER['VERCEL']) && ($configuredDb || $localDb !== ''));
+define('PERSISTENT_DB', $postgresConfigured !== '' || (!isset($_SERVER['VERCEL']) && ($configuredDb || $localDb !== '')));
 define('DEMO_DB_FILE', PERSISTENT_DB ? ($configuredDb ?: $localDb) : $workspace . '/db-' . $_SESSION['demo_workspace'] . '.sqlite');
 
 try {

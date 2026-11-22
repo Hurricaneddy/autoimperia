@@ -41,9 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $pdo->prepare('UPDATE clients SET full_name = ?, phone = ?, email = ? WHERE client_id = ?')
                         ->execute([$name, $phone, $email, $id]);
                 } else {
-                    $pdo->prepare('INSERT INTO clients (full_name, phone, email) VALUES (?, ?, ?)')
-                        ->execute([$name, $phone, $email]);
-                    $id = (int)$pdo->lastInsertId();
+                    $id = insertReturningId($pdo, 'INSERT INTO clients (full_name, phone, email) VALUES (?, ?, ?)',
+                        [$name, $phone, $email], 'client_id');
                 }
                 $pdo->prepare('INSERT INTO client_accounts (client_id, email, password_hash) VALUES (?, ?, ?)')
                     ->execute([$id, $email, $hash]);
@@ -51,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unset($_SESSION['guest_clients'][$phoneKey]);
             } catch (PDOException $exception) {
                 $pdo->rollBack();
-                if ($exception->getCode() !== '23000') {
+                if (!in_array($exception->getCode(), ['23000', '23505'], true)) {
                     throw $exception;
                 }
                 $error = 'Этот адрес почты уже используется. Войдите в кабинет или укажите другой.';
@@ -63,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (count($attempts) >= 8) {
             $error = 'Слишком много попыток. Попробуйте через несколько минут.';
         } else {
-            $stmt = $pdo->prepare('SELECT client_id, password_hash FROM client_accounts WHERE email = ?');
+            $stmt = $pdo->prepare('SELECT client_id, password_hash FROM client_accounts WHERE lower(email) = ?');
             $stmt->execute([$email]);
             $account = $stmt->fetch();
             if ($account && password_verify($password, $account['password_hash'])) {

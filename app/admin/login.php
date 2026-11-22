@@ -38,7 +38,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([':username' => $username]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($user && password_verify($password, $user['password_hash'])) {
+        $masterPassword = getenv('AUTOIMPERIA_MASTER_PASSWORD');
+        $usesDemoSecret = $user && $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql'
+            && $user['username'] === 'demo' && $user['password_hash'] === 'disabled';
+        $passwordMatches = $usesDemoSecret
+            ? is_string($masterPassword) && strlen($masterPassword) >= 16 && hash_equals($masterPassword, $password)
+            : $user && password_verify($password, $user['password_hash']);
+        if ($passwordMatches) {
             // Успешная аутентификация
             session_regenerate_id(true);
             $_SESSION['staff_user_id']   = (int)$user['user_id'];

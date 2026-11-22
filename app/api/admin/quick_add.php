@@ -51,6 +51,9 @@ try {
 
     // 1. Проверка доступности поста
     $forUpdate = ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') ? '' : 'FOR UPDATE';
+    if ($forUpdate) {
+        $pdo->prepare('SELECT bay_id FROM work_bays WHERE bay_id = ? FOR UPDATE')->execute([$bayId]);
+    }
     $checkSql = "
         SELECT appointment_id 
         FROM appointments 
@@ -86,9 +89,8 @@ try {
     if ($client) {
         $clientId = (int)$client['client_id'];
     } else {
-        $insCl = $pdo->prepare("INSERT INTO clients (full_name, phone, notes) VALUES (:name, :phone, 'Внесён мастером')");
-        $insCl->execute([':name' => $fullName, ':phone' => $phone]);
-        $clientId = (int)$pdo->lastInsertId();
+        $clientId = insertReturningId($pdo, "INSERT INTO clients (full_name, phone, notes) VALUES (:name, :phone, 'Внесён мастером')",
+            [':name' => $fullName, ':phone' => $phone], 'client_id');
     }
 
     // 3. Автомобиль
@@ -99,9 +101,8 @@ try {
     if ($veh) {
         $vehicleId = (int)$veh['vehicle_id'];
     } else {
-        $insVh = $pdo->prepare("INSERT INTO vehicles (client_id, brand, model, plate_number) VALUES (:cid, :brand, :model, :plate)");
-        $insVh->execute([':cid' => $clientId, ':brand' => $brand, ':model' => $model, ':plate' => $plateNumber ?: null]);
-        $vehicleId = (int)$pdo->lastInsertId();
+        $vehicleId = insertReturningId($pdo, "INSERT INTO vehicles (client_id, brand, model, plate_number) VALUES (:cid, :brand, :model, :plate)",
+            [':cid' => $clientId, ':brand' => $brand, ':model' => $model, ':plate' => $plateNumber ?: null], 'vehicle_id');
     }
 
     // 4. Запись
@@ -109,13 +110,13 @@ try {
     $masterUser = getAuthUser();
     $masterId = $masterUser ? (int)$masterUser['id'] : 1;
 
-    $appStmt = $pdo->prepare("
+    $appInsertSql = "
         INSERT INTO appointments 
         (booking_code, client_id, vehicle_id, bay_id, master_id, visit_date, start_time, end_time, total_price, status, client_comment, internal_notes) 
         VALUES 
         (:code, :cid, :vid, :bid, :mid, :vdate, :stime, :etime, :price, 'confirmed', :comment, 'Оформлено по телефону')
-    ");
-    $appStmt->execute([
+    ";
+    $appointmentId = insertReturningId($pdo, $appInsertSql, [
         ':code'    => $bookingCode,
         ':cid'     => $clientId,
         ':vid'     => $vehicleId,
@@ -126,8 +127,7 @@ try {
         ':etime'   => $endTime,
         ':price'   => $totalPrice,
         ':comment' => $comment
-    ]);
-    $appointmentId = (int)$pdo->lastInsertId();
+    ], 'appointment_id');
 
     // 5. Услуга по умолчанию
     $servStmt = $pdo->prepare("

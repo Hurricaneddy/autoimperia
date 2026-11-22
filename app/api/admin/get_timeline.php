@@ -49,13 +49,18 @@ try {
 
         $search = is_string($_GET['q'] ?? null) ? mb_substr(trim($_GET['q']), 0, 150) : '';
         if ($search !== '') {
-            $pdo->sqliteCreateFunction('order_search_lower', static fn ($text) => mb_strtolower((string)$text));
-            $pdo->sqliteCreateFunction('order_search_digits', static fn ($text) => preg_replace('/\D+/', '', (string)$text));
-            $conditions[] = "(
-                INSTR(order_search_lower(CONCAT(a.booking_code, ' ', c.full_name, ' ', c.phone, ' ',
-                    v.brand, ' ', v.model, ' ', v.plate_number, ' ', a.client_comment)), :search) > 0
-                OR (CAST(:phone_enabled AS INTEGER) = 1 AND INSTR(order_search_digits(c.phone), :search_phone) > 0)
-            )";
+            $orderText = "CONCAT(a.booking_code, ' ', c.full_name, ' ', c.phone, ' ',
+                v.brand, ' ', v.model, ' ', v.plate_number, ' ', a.client_comment)";
+            if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql') {
+                $textMatch = "strpos(lower($orderText), :search)";
+                $phoneMatch = "strpos(regexp_replace(c.phone, '[^0-9]', '', 'g'), :search_phone)";
+            } else {
+                $pdo->sqliteCreateFunction('order_search_lower', static fn ($text) => mb_strtolower((string)$text));
+                $pdo->sqliteCreateFunction('order_search_digits', static fn ($text) => preg_replace('/\D+/', '', (string)$text));
+                $textMatch = "INSTR(order_search_lower($orderText), :search)";
+                $phoneMatch = 'INSTR(order_search_digits(c.phone), :search_phone)';
+            }
+            $conditions[] = "($textMatch > 0 OR (CAST(:phone_enabled AS INTEGER) = 1 AND $phoneMatch > 0))";
             $params[':search'] = mb_strtolower($search);
             $digits = preg_replace('/\D+/', '', $search);
             $phoneLike = strlen($digits) >= 4 && preg_match('/^[+\d\s().-]+$/', $search);
