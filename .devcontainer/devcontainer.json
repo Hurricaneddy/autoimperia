@@ -1,0 +1,12 @@
+{
+  "name": "Автоимперия",
+  "image": "mcr.microsoft.com/devcontainers/php:8.4-bookworm",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "Автоимперия",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postStartCommand": "if ! curl --silent --fail --max-time 5 http://127.0.0.1:8000/ >/dev/null; then nohup php -S 127.0.0.1:8000 -t public api/router.php >/tmp/autoimperia.log 2>&1 </dev/null & fi"
+}
