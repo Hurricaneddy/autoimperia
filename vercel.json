@@ -1,0 +1,65 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "outputDirectory": "public",
+  "functions": {
+    "api/router.php": {
+      "runtime": "vercel-php@0.8.0",
+      "includeFiles": "app/**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/api/router.php?__demo_route=/"
+    },
+    {
+      "source": "/index.php",
+      "destination": "/api/router.php?__demo_route=/index.php"
+    },
+    {
+      "source": "/admin/index.php",
+      "destination": "/api/router.php?__demo_route=/admin/index.php"
+    },
+    {
+      "source": "/admin/login.php",
+      "destination": "/api/router.php?__demo_route=/admin/login.php"
+    },
+    {
+      "source": "/api/check_status.php",
+      "destination": "/api/router.php?__demo_route=/api/check_status.php"
+    },
+    {
+      "source": "/api/get_services.php",
+      "destination": "/api/router.php?__demo_route=/api/get_services.php"
+    },
+    {
+      "source": "/api/get_slots.php",
+      "destination": "/api/router.php?__demo_route=/api/get_slots.php"
+    },
+    {
+      "source": "/api/parse_car_pricing.php",
+      "destination": "/api/router.php?__demo_route=/api/parse_car_pricing.php"
+    },
+    {
+      "source": "/api/create_booking.php",
+      "destination": "/api/router.php?__demo_route=/api/create_booking.php"
+    },
+    {
+      "source": "/api/process_payment.php",
+      "destination": "/api/router.php?__demo_route=/api/process_payment.php"
+    },
+    {
+      "source": "/api/admin/get_timeline.php",
+      "destination": "/api/router.php?__demo_route=/api/admin/get_timeline.php"
+    },
+    {
+      "source": "/api/admin/quick_add.php",
+      "destination": "/api/router.php?__demo_route=/api/admin/quick_add.php"
+    },
+    {
+      "source": "/api/admin/update_status.php",
+      "destination": "/api/router.php?__demo_route=/api/admin/update_status.php"
+    }
+  ]
+}
